@@ -467,7 +467,7 @@ export default {
       }
       const containerEl = this.wheelTargetContainerEl
       const el = this.wheelTargetEl
-      const direction = Math.max(-1, Math.min(1, e.deltaY)) //判断滚轮方向
+      const direction = Math.max(-1, Math.min(1, e.deltaX)) || Math.max(-1, Math.min(1, e.deltaY)) //判断滚轮方向
       let [currentTranslateX] = el.style.transform.replace(/[^0-9\-,]/g, '').split(',')
       const scrollRate = 80
       const maxDistance = el.offsetWidth - containerEl.offsetWidth
@@ -488,7 +488,7 @@ export default {
     this.navTabEl && this.navTabEl.removeEventListener('wheel', this.handleWheel)
   },
   mounted () {
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 40; i++) {
       this.editableTabs.push({
         title: `Tab ${i + 1}`,
         name: i.toString(),
