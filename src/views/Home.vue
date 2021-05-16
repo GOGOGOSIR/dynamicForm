@@ -1,6 +1,40 @@
 /* eslint-disable no-useless-escape */
 <template>
   <div class="home">
+    <router-link to="/about">about</router-link>
+    <div id="nav-tab" ref="navTab">
+      <el-tabs
+        ref="elNav"
+        v-model="editableTabsValue"
+        type="card"
+        editable
+        @edit="handleTabsEdit"
+      >
+        <el-tab-pane
+          :key="item.name"
+          v-for="item in editableTabs"
+          :label="item.title"
+          :name="item.name"
+        >
+          {{ item.content }}
+        </el-tab-pane>
+      </el-tabs>
+    </div>
+    <el-tabs
+      v-model="editableTabsValue"
+      type="card"
+      editable
+      @edit="handleTabsEdit"
+    >
+      <el-tab-pane
+        :key="item.name"
+        v-for="item in editableTabs"
+        :label="item.title"
+        :name="item.name"
+      >
+        {{ item.content }}
+      </el-tab-pane>
+    </el-tabs>
     <el-form
       class="form"
       ref="form"
@@ -217,6 +251,9 @@ export default {
   name: 'Home',
   data () {
     return {
+      editableTabsValue: '2',
+      editableTabs: [],
+      tabIndex: 2,
       dynamicList: [],
       form: {
         name: '',
@@ -253,6 +290,34 @@ export default {
     }
   },
   methods: {
+    handleTabsEdit (targetName, action) {
+      if (action === 'add') {
+        let newTabName = Date.now().toString();
+        this.editableTabs.push({
+          title: 'New Tab',
+          name: newTabName,
+          content: 'New Tab content'
+        });
+        this.editableTabsValue = newTabName;
+      }
+      if (action === 'remove') {
+        let tabs = this.editableTabs;
+        let activeName = this.editableTabsValue;
+        if (activeName === targetName) {
+          tabs.forEach((tab, index) => {
+            if (tab.name === targetName) {
+              let nextTab = tabs[index + 1] || tabs[index - 1];
+              if (nextTab) {
+                activeName = nextTab.name;
+              }
+            }
+          });
+        }
+
+        this.editableTabsValue = activeName;
+        this.editableTabs = tabs.filter(tab => tab.name !== targetName);
+      }
+    },
     validatorDate (rule, value, callback, type) {
       if (value && this.form[type]) {
         const targetTime = value.getTime()
@@ -384,9 +449,53 @@ export default {
           return false;
         }
       })
-    }
+    },
+    setNavTabMouseWheel () {
+      this.$nextTick(() => {
+        this.navTabEl = this.$refs.navTab
+        this.wheelTargetContainerEl = document.querySelector('#nav-tab .el-tabs--card .el-tabs__nav-scroll')
+        this.wheelTargetEl = this.wheelTargetContainerEl && this.wheelTargetContainerEl.querySelector('.el-tabs__nav')
+        this.elementTabScroll = this.$refs.elNav.$refs.nav
+        if (this.navTabEl) {
+          this.navTabEl.addEventListener('wheel', this.handleWheel)
+        }
+      })
+    },
+    handleWheel (e) {
+      if (!this.wheelTargetContainerEl || !this.wheelTargetEl || !this.elementTabScroll) {
+        return
+      }
+      const containerEl = this.wheelTargetContainerEl
+      const el = this.wheelTargetEl
+      const direction = Math.max(-1, Math.min(1, e.deltaY)) //判断滚轮方向
+      let [currentTranslateX] = el.style.transform.replace(/[^0-9\-,]/g, '').split(',')
+      const scrollRate = 80
+      const maxDistance = el.offsetWidth - containerEl.offsetWidth
+      let translateX = 0
+      currentTranslateX = +currentTranslateX
+      if (direction > 0) {
+        translateX = Math.max(currentTranslateX -= scrollRate, -maxDistance)
+      } else {
+        translateX = Math.min(currentTranslateX += scrollRate, 0)
+      }
+      this.elementTabScroll.navOffset = Math.abs(translateX)
+      el.style.transform = `translateX(${translateX}px)`
+      e.preventDefault && e.preventDefault()
+    },
+  },
+  beforeDestroy () {
+    console.log('clear')
+    this.navTabEl && this.navTabEl.removeEventListener('wheel', this.handleWheel)
   },
   mounted () {
+    for (let i = 0; i < 15; i++) {
+      this.editableTabs.push({
+        title: `Tab ${i + 1}`,
+        name: i.toString(),
+        content: `Tab ${i + 1} content`
+      })
+    }
+    this.setNavTabMouseWheel()
     this.createDynamicForm()
   }
 }
