@@ -467,19 +467,22 @@ export default {
       }
       const containerEl = this.wheelTargetContainerEl
       const el = this.wheelTargetEl
-      const direction = Math.max(-1, Math.min(1, e.deltaX)) || Math.max(-1, Math.min(1, e.deltaY)) //判断滚轮方向
+      // const direction = Math.max(-1, Math.min(1, e.deltaX)) || Math.max(-1, Math.min(1, e.deltaY)) //判断滚轮方向
+      const direction = Math.max(-1, Math.min(1, e.deltaY))
       let [currentTranslateX] = el.style.transform.replace(/[^0-9\-,]/g, '').split(',')
       const scrollRate = 80
       const maxDistance = el.offsetWidth - containerEl.offsetWidth
       let translateX = 0
       currentTranslateX = +currentTranslateX
-      if (direction > 0) {
-        translateX = Math.max(currentTranslateX -= scrollRate, -maxDistance)
-      } else {
-        translateX = Math.min(currentTranslateX += scrollRate, 0)
+      if (Math.abs(direction) !== 0 && Math.abs(e.deltaY) - Math.abs(e.deltaX) > 1) {
+        if (direction > 0) {
+          translateX = Math.max(currentTranslateX -= scrollRate, -maxDistance)
+        } else {
+          translateX = Math.min(currentTranslateX += scrollRate, 0)
+        }
+        this.elementTabScroll.navOffset = Math.abs(translateX)
+        el.style.transform = `translateX(${translateX}px)`
       }
-      this.elementTabScroll.navOffset = Math.abs(translateX)
-      el.style.transform = `translateX(${translateX}px)`
       e.preventDefault && e.preventDefault()
     },
   },
