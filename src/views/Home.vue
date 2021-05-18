@@ -286,7 +286,8 @@ export default {
           },
           trigger: 'change'
         }]
-      }
+      },
+      timer: null
     }
   },
   methods: {
@@ -457,20 +458,58 @@ export default {
         this.wheelTargetEl = this.wheelTargetContainerEl && this.wheelTargetContainerEl.querySelector('.el-tabs__nav')
         this.elementTabScroll = this.$refs.elNav.$refs.nav
         if (this.navTabEl) {
-          this.navTabEl.addEventListener('wheel', this.handleWheel)
+          // this.navTabEl.addEventListener('wheel', this.dounce(this.handleWheel))
+          this.navTabEl.addEventListener('wheel', this.handleWheel, {
+            passive: false
+          })
         }
       })
     },
+    dounce (callback, isRun = true, delay = 300) {
+      let timer = null
+      return (...args) => {
+
+        if (timer) {
+          clearTimeout(timer)
+          !isRun && (timer = null)
+        }
+        if (isRun) {
+          const exec = !timer
+          timer = setTimeout(() => {
+            timer = null
+          }, delay)
+          if (exec) {
+            callback && callback.apply(this, args)
+          }
+        } else {
+          timer = setTimeout(() => {
+            callback && callback.apply(this, args)
+          }, delay)
+        }
+      }
+    },
     handleWheel (e) {
+      e.preventDefault && e.preventDefault()
+      if (this.timer) {
+        return
+      }
+      const exec = !this.timer
+      this.timer = setTimeout(() => {
+        this.timer = null
+      }, 100)
+      if (exec) {
+        this.wheel(e)
+      }
+    },
+    wheel (e) {
       if (!this.wheelTargetContainerEl || !this.wheelTargetEl || !this.elementTabScroll) {
         return
       }
       const containerEl = this.wheelTargetContainerEl
       const el = this.wheelTargetEl
-      // const direction = Math.max(-1, Math.min(1, e.deltaX)) || Math.max(-1, Math.min(1, e.deltaY)) //判断滚轮方向
       const direction = Math.max(-1, Math.min(1, e.deltaY))
       let [currentTranslateX] = el.style.transform.replace(/[^0-9\-,]/g, '').split(',')
-      const scrollRate = 80
+      const scrollRate = 200
       const maxDistance = el.offsetWidth - containerEl.offsetWidth
       let translateX = 0
       currentTranslateX = +currentTranslateX
@@ -483,8 +522,8 @@ export default {
         this.elementTabScroll.navOffset = Math.abs(translateX)
         el.style.transform = `translateX(${translateX}px)`
       }
-      e.preventDefault && e.preventDefault()
-    },
+      console.log(direction)
+    }
   },
   beforeDestroy () {
     console.log('clear')
